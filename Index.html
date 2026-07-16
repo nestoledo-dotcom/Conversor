@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Conversor">
+<title>Conversor</title>
+<style>
+  :root{
+    --bg:#1c1e1f;
+    --panel:#232628;
+    --line:#34383a;
+    --ink:#ece7de;
+    --ink-dim:#8b9290;
+    --amber:#e2a13d;
+    --amber-dim:#6b5a34;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0;padding:0;height:100%;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+    overscroll-behavior:none;
+  }
+  body{
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    display:flex;flex-direction:column;
+    min-height:100vh;
+  }
+  header{
+    padding:28px 24px 8px;
+  }
+  header .eyebrow{
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ink-dim);font-weight:600;
+  }
+  header h1{
+    margin:4px 0 0;font-size:26px;font-weight:650;letter-spacing:-.01em;
+  }
+  main{
+    flex:1;padding:12px 20px 32px;display:flex;flex-direction:column;gap:20px;
+  }
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:20px 20px 16px;
+  }
+  .panel-label{
+    display:flex;justify-content:space-between;align-items:baseline;
+    margin-bottom:14px;
+  }
+  .panel-label .name{
+    font-size:13px;font-weight:600;color:var(--ink-dim);
+    letter-spacing:.02em;
+  }
+  .panel-label .swap{
+    background:none;border:none;color:var(--amber);
+    font-size:12px;font-weight:600;letter-spacing:.03em;
+    padding:6px 10px;border-radius:20px;border:1px solid var(--amber-dim);
+  }
+  .panel-label .swap:active{background:var(--amber-dim);}
+
+  .field{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 0;
+  }
+  .field + .field{border-top:1px solid var(--line);}
+  .field .unit{
+    font-size:14px;color:var(--ink-dim);min-width:64px;
+  }
+  .field input{
+    flex:1;background:none;border:none;color:var(--ink);
+    font-family:ui-monospace,"SF Mono",Menlo,monospace;
+    font-size:34px;font-weight:600;text-align:right;
+    outline:none;caret-color:var(--amber);
+    min-width:0;
+  }
+  .field.active .unit{color:var(--amber);}
+
+  .tick{
+    height:1px;background:repeating-linear-gradient(
+      to right,var(--line) 0 4px,transparent 4px 9px
+    );margin:2px 0 0;
+  }
+
+  footer{
+    padding:0 24px 18px;text-align:center;
+  }
+  footer span{
+    font-size:11px;color:var(--ink-dim);letter-spacing:.04em;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Uso personal</div>
+  <h1>Conversor</h1>
+</header>
+
+<main>
+
+  <section class="panel" id="panel-temp">
+    <div class="panel-label">
+      <span class="name">Temperatura</span>
+    </div>
+    <div class="field" id="field-c">
+      <span class="unit">°C</span>
+      <input type="text" inputmode="decimal" id="input-c" placeholder="0">
+    </div>
+    <div class="tick"></div>
+    <div class="field" id="field-f">
+      <span class="unit">°F</span>
+      <input type="text" inputmode="decimal" id="input-f" placeholder="32">
+    </div>
+  </section>
+
+  <section class="panel" id="panel-torque">
+    <div class="panel-label">
+      <span class="name">Torque</span>
+    </div>
+    <div class="field" id="field-nm">
+      <span class="unit">N·m</span>
+      <input type="text" inputmode="decimal" id="input-nm" placeholder="0">
+    </div>
+    <div class="tick"></div>
+    <div class="field" id="field-lbft">
+      <span class="unit">lb·ft</span>
+      <input type="text" inputmode="decimal" id="input-lbft" placeholder="0">
+    </div>
+  </section>
+
+</main>
+
+<footer><span>Escribe en cualquier campo</span></footer>
+
+<script>
+  function setupPair(idA, idB, aToB, bToA, fieldAId, fieldBId){
+    const a = document.getElementById(idA);
+    const b = document.getElementById(idB);
+    const fa = document.getElementById(fieldAId);
+    const fb = document.getElementById(fieldBId);
+
+    function clean(n){
+      if(!isFinite(n)) return "";
+      return (Math.round(n*100)/100).toString();
+    }
+
+    a.addEventListener('input', () => {
+      fa.classList.add('active'); fb.classList.remove('active');
+      const v = parseFloat(a.value.replace(',','.'));
+      b.value = a.value.trim()==="" ? "" : clean(aToB(v));
+    });
+    b.addEventListener('input', () => {
+      fb.classList.add('active'); fa.classList.remove('active');
+      const v = parseFloat(b.value.replace(',','.'));
+      a.value = b.value.trim()==="" ? "" : clean(bToA(v));
+    });
+  }
+
+  setupPair('input-c','input-f',
+    c => c*9/5+32,
+    f => (f-32)*5/9,
+    'field-c','field-f'
+  );
+
+  setupPair('input-nm','input-lbft',
+    nm => nm*0.737562,
+    lbft => lbft/0.737562,
+    'field-nm','field-lbft'
+  );
+</script>
+
+</body>
+</html>
